@@ -41,8 +41,9 @@ def handshake_arduino(
 
     # Reset the timeout
     arduino.timeout = timeout
-
+    return handshake_message.decode()
 
 # Call the handshake function
 while True:
-    handshake_arduino(arduino, print_handshake_message=True)
+    if handshake_arduino(arduino, print_handshake_message=True) == "1":
+        print("2905")

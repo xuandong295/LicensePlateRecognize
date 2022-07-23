@@ -78,7 +78,7 @@ def predict_from_model(image, model, labels):
     image = np.stack((image,) * 3, axis=-1)
     prediction = labels.inverse_transform([np.argmax(model.predict(image[np.newaxis, :]))])
     return prediction
-cap = cv2.VideoCapture('license_video.mp4')
+cap = cv2.VideoCapture('vietnamlicenseplate.mp4')
 count = 0
 # if (cap.isOpened()== False):
 #     print("Error opening video stream or file")

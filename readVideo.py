@@ -1,16 +1,16 @@
 import cv2
-
+import uuid
 cap = cv2.VideoCapture('license_video.mp4')
-print(cap.get(1))
 # if (cap.isOpened()== False):
 #     print("Error opening video stream or file")
 while True:
 # Capture frame-by-frame
-    print(1)
     ret, frame = cap.read()
 
     # Display the resulting frame
+
     cv2.imshow('Frame', frame)
+    cv2.imwrite("MyFile/%s.jpg" % uuid.uuid4(), frame)
     # Press Q on keyboard to  exit
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
