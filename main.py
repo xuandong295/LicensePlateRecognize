@@ -84,16 +84,16 @@ count = 0
 #     print("Error opening video stream or file")
 while True:
 # Capture frame-by-frame
-    ret, frame = cap.read()
-
-    # Display the resulting frame
-    cv2.imshow('Frame', frame)
-    count += 30 # i.e. at 30 fps, this advances one second
-    cap.set(cv2.CAP_PROP_POS_FRAMES, count)
-    # Press Q on keyboard to  exit
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
+#     ret, frame = cap.read()
+#
+#     # Display the resulting frame
+#     cv2.imshow('Frame', frame)
+#     count += 30 # i.e. at 30 fps, this advances one second
+#     cap.set(cv2.CAP_PROP_POS_FRAMES, count)
+#     # Press Q on keyboard to  exit
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+    frame = cv2.imread("./MyFile/48d9366b-fb8e-463b-b196-1c59f4eedc83.jpg");
     # Obtain plate image and its coordinates from an image
     test_image = frame
     LpImg, cor = get_plate(test_image)
@@ -102,17 +102,17 @@ while True:
     # print("Detect %i plate(s) in" % len(LpImg), splitext(basename(test_image))[0])
     print("Coordinate of plate(s) in image: \n", cor)
     # Visualize our result
-    # plt.figure(figsize=(10,5))
-    # plt.subplot(1,2,1)
-    # plt.axis(False)
-    # plt.imshow(preprocess_image(test_image))
-    # plt.subplot(1,2,2)
-    # plt.axis(False)
-    # plt.imshow(LpImg[0])
-    # # print(test_image)
-    # # print("hiii")
-    # print(LpImg[0].shape)
-    # cv2.imwrite("file.jpg", LpImg[0]*255)
+    plt.figure(figsize=(10,5))
+    plt.subplot(1,2,1)
+    plt.axis(False)
+    plt.imshow(preprocess_image(test_image))
+    plt.subplot(1,2,2)
+    plt.axis(False)
+    plt.imshow(LpImg[0])
+    # print(test_image)
+    # print("hiii")
+    print(LpImg[0].shape)
+    cv2.imwrite("file.jpg", LpImg[0]*255)
     #tesseract
     # plt.subplot(1, 1, 1)
     # # plt.imshow(LpImg[0])
@@ -123,32 +123,39 @@ while True:
     # print("\n")
     # text = pytesseract.image_to_string(license_plate)
     # print(text)
-    # def draw_box(image_path, cor, thickness=3):
-    #     pts = []
-    #     x_coordinates = cor[0][0]
-    #     y_coordinates = cor[0][1]
-    #     # store the top-left, top-right, bottom-left, bottom-right
-    #     # of the plate license respectively
-    #     for i in range(4):
-    #         pts.append([int(x_coordinates[i]), int(y_coordinates[i])])
-    #
-    #     pts = np.array(pts, np.int32)
-    #     pts = pts.reshape((-1, 1, 2))
-    #     vehicle_image = preprocess_image(image_path)
-    #
-    #     cv2.polylines(vehicle_image, [pts], True, (0, 255, 0), thickness)
-    #     return vehicle_image
-    #
-    #
-    # plt.figure(figsize=(8,8))
-    # plt.axis(False)
-    # plt.imshow(draw_box(test_image,cor))
-    # plt.show()
+    def draw_box(image_path, cor, thickness=3):
+        pts = []
+        x_coordinates = cor[0][0]
+        y_coordinates = cor[0][1]
+        # store the top-left, top-right, bottom-left, bottom-right
+        # of the plate license respectively
+        for i in range(4):
+            pts.append([int(x_coordinates[i]), int(y_coordinates[i])])
+
+        pts = np.array(pts, np.int32)
+        pts = pts.reshape((-1, 1, 2))
+        vehicle_image = preprocess_image(image_path)
+
+        cv2.polylines(vehicle_image, [pts], True, (0, 255, 0), thickness)
+        return vehicle_image
+
+
+    plt.figure(figsize=(8,8))
+    plt.axis(False)
+    plt.imshow(draw_box(test_image,cor))
+    plt.show()
+
     if (len(LpImg)):  # check if there is at least one license image
         # Scales, calculates absolute values, and converts the result to 8-bit.
         plate_image = cv2.convertScaleAbs(LpImg[0], alpha=(255.0))
+        # cv2.imwrite("plate", plate_image)
+        # plate_image = cv2.imread("plate")
         # convert to grayscale and blur the image
-        gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
+
+        gray = cv2.cvtColor(plate_image, cv2.COLOR_RGB2GRAY)
+        cv2.imshow("notgray", gray)
+        cv2.waitKey(0)
+
         blur = cv2.GaussianBlur(gray, (7, 7), 0)
         # Applied inversed thresh_binary
         binary = cv2.threshold(blur, 180, 255,
@@ -156,8 +163,27 @@ while True:
         ## Applied dilation
         kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
-        # plt.imshow(thre_mor)
-        # plt.show()
+        plt.figure(figsize=(8,8))
+        plt.subplot(1, 5, 1)
+        plt.imshow(plate_image)
+        plt.xlabel('plate_image')
+        plt.subplot(1, 5, 2)
+        plt.imshow(gray, cmap="gray")
+        plt.xlabel('gray')
+
+        plt.subplot(1, 5, 3)
+        plt.imshow(binary, cmap="gray")
+        plt.xlabel('binary')
+
+        plt.subplot(1, 5, 4)
+        plt.imshow(kernel3)
+        plt.xlabel('kernel3')
+
+        plt.subplot(1, 5, 5)
+        plt.imshow(thre_mor, cmap="gray")
+        plt.xlabel('dilation')
+
+        plt.show()
 
     cont, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # creat a copy version "test_roi" of plat_image to draw bounding box
@@ -179,13 +205,13 @@ while True:
                 _, curr_num = cv2.threshold(curr_num, 220, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
                 crop_characters.append(curr_num)
     print("Detect {} letters...".format(len(crop_characters)))
-    # fig = plt.figure(figsize=(14, 4))
-    # grid = gridspec.GridSpec(ncols=len(crop_characters), nrows=1, figure=fig)
-    # for i in range(len(crop_characters)):
-    #     fig.add_subplot(grid[i])
-    #     plt.axis(False)
-    #     plt.imshow(crop_characters[i], cmap="gray")
-    # plt.show()
+    fig = plt.figure(figsize=(14, 4))
+    grid = gridspec.GridSpec(ncols=len(crop_characters), nrows=1, figure=fig)
+    for i in range(len(crop_characters)):
+        fig.add_subplot(grid[i])
+        plt.axis(False)
+        plt.imshow(crop_characters[i], cmap="gray")
+    plt.show()
     # Load model architecture, weight and labels
     json_file = open('MobileNets_character_recognition.json', 'r')
     loaded_model_json = json_file.read()
@@ -198,17 +224,17 @@ while True:
     print("[INFO] Labels loaded successfully...")
     # pre-processing input images and pedict with model
 
-    # fig = plt.figure(figsize=(15, 3))
-    # cols = len(crop_characters)
-    # grid = gridspec.GridSpec(ncols=cols, nrows=1, figure=fig)
+    fig = plt.figure(figsize=(15, 3))
+    cols = len(crop_characters)
+    grid = gridspec.GridSpec(ncols=cols, nrows=1, figure=fig)
     final_string = ''
     for i, character in enumerate(crop_characters):
-        # fig.add_subplot(grid[i])
+        fig.add_subplot(grid[i])
         title = np.array2string(predict_from_model(character, model, labels))
-        # plt.title('{}'.format(title.strip("'[]"), fontsize=20))
+        plt.title('{}'.format(title.strip("'[]"), fontsize=20))
         final_string += title.strip("'[]")
-        # plt.axis(False)
-        # plt.imshow(character, cmap='gray')
+        plt.axis(False)
+        plt.imshow(character, cmap='gray')
     print(final_string)
-    # plt.savefig('final_result.png', dpi=300)
+    plt.savefig('final_result.png', dpi=300)
 

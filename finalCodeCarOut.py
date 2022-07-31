@@ -125,7 +125,6 @@ def predict_from_model(image, model, labels):
     return prediction
 
 def CallAPIUploadData(FrontImageLink, BackImageLink, LicensePlateNumber, ParkingAreaId):
-    ID = uuid.uuid4()
     # FrontImageLink = "https://drive.google.com/uc?export=view&id=1ojh3ABPB6LEh1tCQTyYt_kfjkn4otWa2"
     # BackImageLink = "https://drive.google.com/uc?export=view&id=1ojh3ABPB6LEh1tCQTyYt_kfjkn4otWa2"
     # LicensePlateNumber = "60A-999.99"
@@ -133,14 +132,26 @@ def CallAPIUploadData(FrontImageLink, BackImageLink, LicensePlateNumber, Parking
     # TimeIn = int(time.mktime(datetime.utcnow().timetuple()))
     # TimeOut = 0
     # Status = 1
-    data = '{{"FrontImageLink":"{FrontImageLink}", "BackImageLink":"{BackImageLink}", "LicensePlateNumber":"{LicensePlateNumber}", "ParkingAreaId":"{ParkingAreaId}"}}'
+    data = '{{"FrontImageLink":"{FrontImageLink}", "BackImageLink":"{BackImageLink}", "LicensePlateNumber":"{LicensePlateNumber}", "ParkingAreaId":"{ParkingAreaId}", "TimeIn":{TimeIn}, "TimeOut":{TimeOut}}}'
     data = data.format(FrontImageLink=FrontImageLink, BackImageLink=BackImageLink,
                        LicensePlateNumber=LicensePlateNumber, ParkingAreaId=ParkingAreaId)
     print(data)
     # Create a new resource
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    response = requests.post('https://localhost:44307/api/Car/in', data=data, verify=False, headers=headers)
+    response = requests.post('https://localhost:44307/api/Car/out', data=data, verify=False, headers=headers)
     print(response.status_code)
+
+def CallAPIPayment(licensePlate):
+    licensePlate = '29A08129'
+    url = 'http://smartparking.local:5555/api/User/payment?licensePlate={LicensePlate}'.format(
+        LicensePlate=licensePlate)
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    response = requests.get(url, verify=False, headers=headers)
+    print(response.status_code)
+    print(response.json())
+    response_dict = response.json()
+    print(response_dict['message'])
+    return response_dict['code']
 
 def UploadImageToGoogleDrive(file_names):
     # upload file
@@ -196,7 +207,7 @@ while True:
     if lock == True:
         continue
     # Call the handshake function
-    if handshake_arduino(arduino, print_handshake_message=True) == CAR_COME_IN_MESSAGE:
+    if handshake_arduino(arduino, print_handshake_message=True) == CAR_COME_OUT_MESSAGE:
         lock = True
         read_image_count = 0
         cap = cv2.VideoCapture('vietnamlicenseplate.mp4')
@@ -294,10 +305,23 @@ while True:
                 cv2.imwrite(image_location, frame)
                 file_names = [image_name]
                 front_image_link = UploadImageToGoogleDrive(file_names)
+                start_time = time.time()
+                while True:
+                    # thanh toán cho đến khi thành công sẽ có timeout ở đây
+
+                    respone = CallAPIPayment(final_string)
+                    if respone == 0:
+                        break
+                    time.sleep(5)
+                    current_time = datetime.now().time()
+                    if (start_time- time.time() > 300):
+                        print("call police")
                 CallAPIUploadData(front_image_link, front_image_link, final_string, "633b4557-7cad-4c18-94cd-e939dd0285b6")
-                lock = False
                 # open barrier
-                value = write_read(BARRIER_IN_OPEN_MESSAGE)
+                value = write_read(BARRIER_OUT_OPEN_MESSAGE)
                 print(value)
+
+                # open lock
+                lock = False
                 break;
 

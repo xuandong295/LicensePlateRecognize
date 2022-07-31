@@ -5,6 +5,11 @@ import serial
 
 arduino = serial.Serial(port='COM4', baudrate=115200, timeout=1)
 
+CAR_COME_IN_MESSAGE = "1"
+BARRIER_IN_OPEN_MESSAGE = "2"
+CAR_COME_OUT_MESSAGE = "3"
+BARRIER_OUT_OPEN_MESSAGE = "4"
+
 
 def handshake_arduino(
     arduino, sleep_time=1, print_handshake_message=False, handshake_code=0
@@ -45,5 +50,5 @@ def handshake_arduino(
 
 # Call the handshake function
 while True:
-    if handshake_arduino(arduino, print_handshake_message=True) == "1":
+    if handshake_arduino(arduino, print_handshake_message=True) == CAR_COME_IN_MESSAGE:
         print("2905")
